@@ -15,28 +15,31 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 201;
-        const episodeMax = 700;
-        const pageWaitInterval = 3000;
+        const episodeCount = 1001;
+        const episodeMax = 1042;
+        const pageWaitInterval = 2000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
             //try {
             await page.goto('https://www.miroppb.com/ASOT/' + episodeNumber, { waitUntil: 'networkidle2' });
-            await page.$eval('#info_table td:first-child', el => { let pos1 = parseInt(el.textContent.indexOf('Release Date:')) + 13; let pos2 = parseInt(el.textContent.indexOf('\n', pos1)); return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a'; })
+            await page.$eval('#info_table td:first-child', el => { 
+                let pos1 = parseInt(el.textContent.indexOf('Release Date:')) + 13; 
+                let pos2 = parseInt(el.textContent.indexOf('\n', pos1)); 
+                return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a'; 
+            })
             .then(async (releaseDate) => {
-                //console.log('Release Date: ' + releaseDate);
-
                 let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
                     let fullTitle, artistName, trackName, specialName;
-                    fullTitle = el.textContent.trim();
+                    fullTitle = el.textContent.replace('–', '-').trim();
 
-                    if(el.textContent.indexOf(' – ')) {
-                        artistName = el.textContent.split(' – ')[0] || 'n/a';
-                        trackName = el.textContent.split(' – ')[1] || 'n/a';
+                    if(fullTitle.indexOf('-')) {
+                        artistName = fullTitle.split('-')[0] || 'n/a';
+                        trackName = fullTitle.split('-')[1] || 'n/a';
                         
                         if(trackName.indexOf('[')) {
                             specialName = trackName.split('[')[1] || 'n/a';
+                            trackName = trackName.split('[')[0] || 'n/a';
                         }
                     }
                     return {
@@ -71,7 +74,7 @@ exports.index = (req, res) => { timeStamp();
                 console.log("JSON file has been saved.");
             });
         }
-        writeFile('output.json', jsonContent);
+        writeFile(`output_${episodeCount}-${episodeMax}.json`, jsonContent);
 
         return dataStore;
     }
