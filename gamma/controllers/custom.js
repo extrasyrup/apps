@@ -15,9 +15,9 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 1001;
-        const episodeMax = 1042;
-        const pageWaitInterval = 2000;
+        const episodeCount = 777;
+        const episodeMax = 778;
+        const pageWaitInterval = 4000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
@@ -79,6 +79,11 @@ exports.index = (req, res) => { timeStamp();
         return dataStore;
     }
 
+exports.fb = (req, res) => {
+    getPageListings();
+    res.render('index', { title: 'FB SCRAPER' });
+}
+
     const getPageListings = async () => {
         const browser = await puppeteer.launch({ devtools: true, headless: false }/**/);
         const page = await browser.newPage();
@@ -95,7 +100,7 @@ exports.index = (req, res) => { timeStamp();
             }
         });
 
-        await page.goto('https://www.bettingpros.com/nba/picks/prop-bets/?date=2021-11-10', { waitUntil: 'networkidle2' }); //Load webpage
+        await page.goto('https://www.bettingpros.com/nba/picks/prop-bets/?date=2021-11-18', { waitUntil: 'networkidle2' }); //Load webpage
         //console.log('dataPull... ', dataPull);
         browser.close();
 
