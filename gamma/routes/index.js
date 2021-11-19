@@ -11,5 +11,6 @@ router.get('/', function(req, res, next) {
 /* SCRAPE: bettingpros */
 var custom_controller = require('../controllers/custom');
 router.get('/custom', custom_controller.index);
+router.get('/fb', custom_controller.fb);
 
 module.exports = router;
