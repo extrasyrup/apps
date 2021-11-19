@@ -1,0 +1,11 @@
+
+index.js
+
+    //sample = await page.$eval('body', (el) => el.textContent);
+    //sample = await page.$$eval('a[href*="/marketplace/category/"]', (el) => el.textContent);
+
+    /*sample = await page.$$eval('[data-pagelet="BrowseFeedUpsell_0"] a[href*="/marketplace/item/', (el) => 
+    el.map(item => ({ name: item.textContent, url: item.getAttribute('href') }))
+    );*/
+
+    //console.log('sample: ', sample);

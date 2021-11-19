@@ -1,0 +1,19 @@
+extends layout
+
+block content
+  h1= title
+  p #{message}
+  script.
+    var dataPull = !{data};
+    console.log('dataPull... ', dataPull);
+  
+  table.table.table-striped.hover
+    tr
+      th Name
+      th Price
+      th City, State
+    each item in JSON.parse(data)
+      tr(data-fbId=item.id, data-fbCatId=item.marketplace_listing_category_id)
+        td= item.marketplace_listing_title
+        td= item.listing_price.formatted_amount
+        td= item.location.reverse_geocode.city + ', ' + item.location.reverse_geocode.state
