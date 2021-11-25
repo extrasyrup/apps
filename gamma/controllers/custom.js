@@ -3,9 +3,7 @@ const screenSizes = { large: { w: 1920, h: 4000 }, medium: { w: 1920, h: 2500 },
 const fs = require('fs');
 
 exports.index = (req, res) => { timeStamp();
-
     scrapePage();
-
     res.render('index', { title: 'CUSTOM SCRAPER' });
 }
 
@@ -15,8 +13,8 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 777;
-        const episodeMax = 778;
+        const episodeCount = 134;
+        const episodeMax = 134;
         const pageWaitInterval = 4000;
         
         console.log('Starting scrape...');
@@ -31,11 +29,11 @@ exports.index = (req, res) => { timeStamp();
             .then(async (releaseDate) => {
                 let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
                     let fullTitle, artistName, trackName, specialName;
-                    fullTitle = el.textContent.replace('–', '-').trim();
+                    fullTitle = el.textContent.replace(' – ', ' - ').trim();
 
                     if(fullTitle.indexOf('-')) {
-                        artistName = fullTitle.split('-')[0] || 'n/a';
-                        trackName = fullTitle.split('-')[1] || 'n/a';
+                        artistName = fullTitle.split(' - ')[0] || 'n/a';
+                        trackName = fullTitle.split(' - ')[1] || 'n/a';
                         
                         if(trackName.indexOf('[')) {
                             specialName = trackName.split('[')[1] || 'n/a';
@@ -79,13 +77,14 @@ exports.index = (req, res) => { timeStamp();
         return dataStore;
     }
 
+
 exports.fb = (req, res) => {
     getPageListings();
     res.render('index', { title: 'FB SCRAPER' });
 }
 
     const getPageListings = async () => {
-        const browser = await puppeteer.launch({ devtools: true, headless: false }/**/);
+        const browser = await puppeteer.launch(/*{ devtools: true, headless: false }*/);
         const page = await browser.newPage();
         await page.setViewport({ width: screenSizes.small.w, height: screenSizes.small.h });
         let dataPull = [];
@@ -94,9 +93,8 @@ exports.fb = (req, res) => {
             let responseUrl = response.url(); //console.log('Response URL...', responseUrl);
 
             if(responseUrl.includes('https://api.bettingpros.com/v3/pbcs?sport=NBA&')) {
-                let resJson = await response.text(); console.log(resJson);
-                console.log(responseUrl);
-                //console.log(Object.keys(resJson));
+                //let resJson = await response.text().then((value) => console.log(value));
+                let resStatus = response.initiator; console.log('resStatus: ' + resStatus);
             }
         });
 
@@ -107,15 +105,50 @@ exports.fb = (req, res) => {
         return dataPull;
     }
 
-    
-    function timeStamp() {
-        var currentdate = new Date(); 
-        var datetime = "LAST STAMP: " + currentdate.getDate() + "/"
-                        + (currentdate.getMonth()+1)  + "/" 
-                        + currentdate.getFullYear() + " @ "  
-                        + currentdate.getHours() + ":"  
-                        + currentdate.getMinutes() + ":" 
-                        + currentdate.getSeconds();
-    
-        console.log('\n\n\n\n', '===', datetime, '===', '\n');
+
+exports.nodemail = (req, res) => {
+    main().catch(console.error);
+    res.render('index', { title: 'NODEMAIL' });
+}
+
+    const nodemailer = require("nodemailer");
+    async function main() {
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+            host: "smtp.dreamhost.com",
+            port: 465,
+            secure: true, // true for 465, false for other ports
+            auth: {
+                user: 'relay@extrasyrup.xyz',
+                pass: '@@Ital1an!!'
+            }
+        });
+
+        // send mail with defined transport object
+        let info = await transporter.sendMail({
+            from: '"Message Relay" <relay@extrasyrup.xyz>', // sender address
+            to: "udoobu@gmail.com", // list of receivers
+            subject: "Hello", // Subject line
+            text: "Hello world?", // plain text body
+            html: "<b>Hello world?</b>" // html body
+        });
+
+        console.log("Message sent: %s", info.messageId);
+        // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+
+        // Preview only available when sending through an Ethereal account
+        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+        // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
     }
+
+function timeStamp() {
+    var currentdate = new Date(); 
+    var datetime = "LAST STAMP: " + currentdate.getDate() + "/"
+                    + (currentdate.getMonth()+1)  + "/" 
+                    + currentdate.getFullYear() + " @ "  
+                    + currentdate.getHours() + ":"  
+                    + currentdate.getMinutes() + ":" 
+                    + currentdate.getSeconds();
+
+    console.log('\n\n\n\n', '===', datetime, '===', '\n');
+}
