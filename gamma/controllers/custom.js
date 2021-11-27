@@ -14,9 +14,9 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 101;
-        const episodeMax = 103;
-        const pageWaitInterval = 4000;
+        const episodeCount = 1;
+        const episodeMax = 1000;
+        const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
@@ -31,8 +31,8 @@ exports.index = (req, res) => { timeStamp();
                 let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
                     let fullTitle = el.textContent.replace(' – ', ' - ').trim(); //Normalizing the two different dashes ' – ' and ' - '
 
-                    const regexTrack = /(^).*(?=-)/g;
-                    const regexArtist = /(?<=-).*(?=\()/g;
+                    const regexArtist = /(^).*(?=-)/g;
+                    const regexTrack = /(?<=-).*(?=\()/g;
                     const regexMix = /(?<=\().*(?=\))/g;
                     const regexSpecial = /(?<=\[).*(?=\])/g;
 
