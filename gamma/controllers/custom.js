@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const screenSizes = { large: { w: 1920, h: 4000 }, medium: { w: 1920, h: 2500 }, small: { w: 1920, h: 1080 } };
 const fs = require('fs');
+const rootUrl = 'https://www.miroppb.com/ASOT/';
 
 exports.index = (req, res) => { timeStamp();
     scrapePage();
@@ -13,40 +14,42 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 134;
-        const episodeMax = 134;
+        const episodeCount = 101;
+        const episodeMax = 103;
         const pageWaitInterval = 4000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
-            //try {
-            await page.goto('https://www.miroppb.com/ASOT/' + episodeNumber, { waitUntil: 'networkidle2' });
-            await page.$eval('#info_table td:first-child', el => { 
-                let pos1 = parseInt(el.textContent.indexOf('Release Date:')) + 13; 
-                let pos2 = parseInt(el.textContent.indexOf('\n', pos1)); 
-                return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a'; 
+            await page.goto(rootUrl + episodeNumber, { waitUntil: 'networkidle2' });
+            await page.$eval('#info_table td:first-child', el => { //Grab release date from content first
+                let textFind = 'Release Date:';
+                let pos1 = parseInt(el.textContent.indexOf(textFind)) + textFind.length;
+                let pos2 = parseInt(el.textContent.indexOf('\n', pos1));
+                return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a';
             })
             .then(async (releaseDate) => {
                 let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
-                    let fullTitle, artistName, trackName, specialName;
-                    fullTitle = el.textContent.replace(' – ', ' - ').trim();
+                    let fullTitle = el.textContent.replace(' – ', ' - ').trim(); //Normalizing the two different dashes ' – ' and ' - '
 
-                    if(fullTitle.indexOf('-')) {
-                        artistName = fullTitle.split(' - ')[0] || 'n/a';
-                        trackName = fullTitle.split(' - ')[1] || 'n/a';
-                        
-                        if(trackName.indexOf('[')) {
-                            specialName = trackName.split('[')[1] || 'n/a';
-                            trackName = trackName.split('[')[0] || 'n/a';
-                        }
-                    }
+                    const regexTrack = /(^).*(?=-)/g;
+                    const regexArtist = /(?<=-).*(?=\()/g;
+                    const regexMix = /(?<=\().*(?=\))/g;
+                    const regexSpecial = /(?<=\[).*(?=\])/g;
+
+                    let rxTrack = fullTitle.match(regexTrack)[0].trim();
+                    let rxArtist = fullTitle.match(regexArtist)[0].trim();
+                    let rxMix = fullTitle.match(regexMix)[0].trim();
+                    let rxSpecial = fullTitle.match(regexSpecial)[0].trim();
+
                     return {
                         'trackNumber': index + 1,
-                        'artistName': artistName.trim(), 
-                        'trackName': trackName.trim(), 
-                        'specialName': specialName.replace(']', '').trim() 
+                        'artistName': rxArtist,
+                        'trackName': rxTrack,
+                        'mixName': rxMix,
+                        'specialName': rxSpecial,
+                        'fullTitle': fullTitle
                     };
-                } ) });
+                })});
 
                 trackList.forEach(el => { el['releaseDate'] = releaseDate; el['episodeNumber'] = episodeNumber;  });
                 dataStore.push(trackList);
@@ -72,7 +75,7 @@ exports.index = (req, res) => { timeStamp();
                 console.log("JSON file has been saved.");
             });
         }
-        writeFile(`output_${episodeCount}-${episodeMax}.json`, jsonContent);
+        writeFile(`data/asot/output_${episodeCount}-${episodeMax}.json`, jsonContent);
 
         return dataStore;
     }
