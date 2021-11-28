@@ -14,8 +14,8 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 1;
-        const episodeMax = 1000;
+        const episodeCount = 101;
+        const episodeMax = 110;
         const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
@@ -36,17 +36,17 @@ exports.index = (req, res) => { timeStamp();
                     const regexMix = /(?<=\().*(?=\))/g;
                     const regexSpecial = /(?<=\[).*(?=\])/g;
 
-                    let rxTrack = fullTitle.match(regexTrack)[0].trim();
-                    let rxArtist = fullTitle.match(regexArtist)[0].trim();
-                    let rxMix = fullTitle.match(regexMix)[0].trim();
-                    let rxSpecial = fullTitle.match(regexSpecial)[0].trim();
-
+                    let rxArtist = fullTitle.match(regexArtist);
+                    let rxTrack = fullTitle.match(regexTrack);
+                    let rxMix = fullTitle.match(regexMix);
+                    let rxSpecial = fullTitle.match(regexSpecial);
+                    
                     return {
                         'trackNumber': index + 1,
-                        'artistName': rxArtist,
-                        'trackName': rxTrack,
-                        'mixName': rxMix,
-                        'specialName': rxSpecial,
+                        'artistName': Array.isArray(rxArtist) ? rxArtist[0].trim() : 'n/a',
+                        'trackName': Array.isArray(rxTrack) ? rxTrack[0].trim() : 'n/a',
+                        'mixName': Array.isArray(rxMix) ? rxMix[0].trim() : 'n/a',
+                        'specialName': Array.isArray(rxSpecial) ? rxSpecial[0].trim() : 'n/a',
                         'fullTitle': fullTitle
                     };
                 })});
