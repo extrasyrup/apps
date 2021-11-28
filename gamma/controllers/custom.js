@@ -14,8 +14,8 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 101;
-        const episodeMax = 110;
+        const episodeCount = 1;
+        const episodeMax = 1000;
         const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
