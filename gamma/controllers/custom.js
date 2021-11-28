@@ -14,8 +14,8 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 1;
-        const episodeMax = 1000;
+        const episodeCount = 841;
+        const episodeMax = 841; //1044
         const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
@@ -27,17 +27,18 @@ exports.index = (req, res) => { timeStamp();
                 let pos2 = parseInt(el.textContent.indexOf('\n', pos1));
                 return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a';
             })
-            .then(async (releaseDate) => {
+            .then(async (releaseDate) => { //Then pull artist and track info
                 let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
                     let fullTitle = el.textContent.replace(' – ', ' - ').trim(); //Normalizing the two different dashes ' – ' and ' - '
 
                     const regexArtist = /(^).*(?=-)/g;
                     const regexTrack = /(?<=-).*(?=\()/g;
+                    const regexTrackAlt = /(?<=-).*(?=\[)/g;
                     const regexMix = /(?<=\().*(?=\))/g;
                     const regexSpecial = /(?<=\[).*(?=\])/g;
-
+                    
                     let rxArtist = fullTitle.match(regexArtist);
-                    let rxTrack = fullTitle.match(regexTrack);
+                    let rxTrack = fullTitle.match(regexTrack) != null ? fullTitle.match(regexTrack) : fullTitle.match(regexTrackAlt);
                     let rxMix = fullTitle.match(regexMix);
                     let rxSpecial = fullTitle.match(regexSpecial);
                     
@@ -75,7 +76,7 @@ exports.index = (req, res) => { timeStamp();
                 console.log("JSON file has been saved.");
             });
         }
-        writeFile(`data/asot/output_${episodeCount}-${episodeMax}.json`, jsonContent);
+        writeFile(`data/asot/output_${episodeCount}-${episodeMax}.json`, jsonContent); timeStamp();
 
         return dataStore;
     }
