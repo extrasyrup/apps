@@ -14,8 +14,8 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 841;
-        const episodeMax = 841; //1044
+        const episodeCount = 700;
+        const episodeMax = 700; //1044
         const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
@@ -34,18 +34,35 @@ exports.index = (req, res) => { timeStamp();
                     const regexArtist = /(^).*(?=-)/g;
                     const regexTrack = /(?<=-).*(?=\()/g;
                     const regexTrackAlt = /(?<=-).*(?=\[)/g;
+                    const regexTrackAlt2 = /(?<=-).*(?=$)/g;
                     const regexMix = /(?<=\().*(?=\))/g;
                     const regexSpecial = /(?<=\[).*(?=\])/g;
                     
                     let rxArtist = fullTitle.match(regexArtist);
-                    let rxTrack = fullTitle.match(regexTrack) != null ? fullTitle.match(regexTrack) : fullTitle.match(regexTrackAlt);
+                    let rxTrack = function() {
+                        let posParen = fullTitle.indexOf('(');
+                        let posBrack = fullTitle.indexOf('[');
+                        console.log(posParen, ', ', posBrack);
+                        if(posParen > -1) { //Contains paren first
+                            return fullTitle.match(regexTrack); //Match on paren, doesn't matter if there's a bracket
+                        } else 
+                        if(posParen < 0 && posBrack > -1) { //Doesn't have paren but has bracket
+                            return fullTitle.match(regexTrackAlt); //Match on bracket
+                        } else
+                        if(posParen < 0 && posBrack < 0) { //Doesn't have paren or bracket
+                            return fullTitle.match(regexTrackAlt2);
+                        } else {
+                            return '!';
+                        }
+                    }
+                    //let rxTrack = fullTitle.match(regexTrack) != null ? fullTitle.match(regexTrack) : fullTitle.match(regexTrackAlt);
                     let rxMix = fullTitle.match(regexMix);
                     let rxSpecial = fullTitle.match(regexSpecial);
                     
                     return {
                         'trackNumber': index + 1,
                         'artistName': Array.isArray(rxArtist) ? rxArtist[0].trim() : 'n/a',
-                        'trackName': Array.isArray(rxTrack) ? rxTrack[0].trim() : 'n/a',
+                        'trackName': rxTrack()[0].trim(),
                         'mixName': Array.isArray(rxMix) ? rxMix[0].trim() : 'n/a',
                         'specialName': Array.isArray(rxSpecial) ? rxSpecial[0].trim() : 'n/a',
                         'fullTitle': fullTitle

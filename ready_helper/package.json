@@ -7,11 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "nodemonConfig": {
-      "ignore": ["data/*"]
+    "ignore": [
+      "data/*"
+    ]
   },
   "author": "extrasyrup",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.17.1",
     "reddit": "^1.2.1"
   }
 }

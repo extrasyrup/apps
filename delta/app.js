@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const screenSizes = { large: { w: 1920, h: 4000 }, medium: { w: 1920, h: 2500 }, small: { w: 1920, h: 1080 } };
 const fs = require('fs');
 
-const getPageListings = async () => { timeStamp();
+(async () => { timeStamp();
     const browser = await puppeteer.launch(/*{ devtools: true, headless: false }*/);
     const page = await browser.newPage();
     await page.setViewport({ width: screenSizes.small.w, height: screenSizes.small.h });
@@ -12,28 +12,20 @@ const getPageListings = async () => { timeStamp();
         let responseUrl = response.url();
         dataPull.push(responseUrl);
         //console.log('      > ', responseUrl);
-
-        /*if(responseUrl.includes('topic/event-topevents/message')) {
-            console.log('      >>> ', responseUrl);
-            let resStatus = await response.json();
-            let resData = (resStatus.sports[0].leagues[0].events).map(el => el.shortName);
-            console.log(resData);
-        }*/
     });
 
-    await page.goto('https://www.espn.com/mens-college-basketball/scoreboard', { waitUntil: 'networkidle2' })
+    await page.goto('http://api.espn.com/v1/sports/football/nfl', { waitUntil: 'networkidle2' })
     .then(res => {
-        //console.log(res);
+        console.log(res);
 
-        writeFile(`data/urls.json`, JSON.stringify(dataPull));
+        //writeFile(`data/urls.json`, JSON.stringify(dataPull));
 
         browser.close();
     
         return dataPull;
     });
-}
+})();
 
-getPageListings();
 
 
 function writeFile(fileName, content) {
