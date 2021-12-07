@@ -15,7 +15,7 @@ function getData() {
   const endpoints = ['wallpaper', 'art', 'painting', 'mentalhealth'];
   const currentEndpoint = `/r/${endpoints[0]}/new`;
   const rootImgDir = 'data/images/';
-  let apiAfter = '', apiLimit = 100, apiMax = 200, finalResult = [];
+  let apiAfter = '', apiLimit = 100, apiMax = 100, finalResult = [];
   
   (function runApi(c) {
       console.log('Page: ' + c);

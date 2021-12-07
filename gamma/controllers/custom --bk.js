@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
-const fs = require('fs');
 const screenSizes = { large: { w: 1920, h: 4000 }, medium: { w: 1920, h: 2500 }, small: { w: 1920, h: 1080 } };
-const regexArtist = /(^).*(?=-)/g, regexTrack = /(?<=-).*(?=\()/g, regexTrackAlt = /(?<=-).*(?=\[)/g, regexTrackAlt2 = /(?<=-).*(?=$)/g, regexMix = /(?<=\().*(?=\))/g, regexSpecial = /(?<=\[).*(?=\])/g;
+const fs = require('fs');
 const rootUrl = 'https://www.miroppb.com/ASOT/';
 
 exports.index = (req, res) => { timeStamp();
@@ -15,54 +14,64 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 901;
-        const episodeMax = 1045; //1045
-        const pageWaitInterval = 2000;
+        const episodeCount = 700;
+        const episodeMax = 700; //1044
+        const pageWaitInterval = 3000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
             await page.goto(rootUrl + episodeNumber, { waitUntil: 'networkidle2' });
-            await page.$eval('#info_table td:first-child', el => {
+            await page.$eval('#info_table td:first-child', el => { //Grab release date from content first
                 let textFind = 'Release Date:';
                 let pos1 = parseInt(el.textContent.indexOf(textFind)) + textFind.length;
                 let pos2 = parseInt(el.textContent.indexOf('\n', pos1));
                 return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a';
             })
-            .then(async (releaseDate) => {
-                let trackList = await page.$$eval('#tracklist ol li', (els) => { 
-                    return els.map((el, index) => {
-                        return el.textContent.replace(' – ', ' - ').trim();
-                    });
-                });
+            .then(async (releaseDate) => { //Then pull artist and track info
+                let trackList = await page.$$eval('#tracklist ol li', (els) => { return els.map((el, index) => {
+                    let fullTitle = el.textContent.replace(' – ', ' - ').trim(); //Normalizing the two different dashes ' – ' and ' - '
 
-                trackList.forEach((el, index) => {
-                    let fullTitle = el;
+                    const regexArtist = /(^).*(?=-)/g;
+                    const regexTrack = /(?<=-).*(?=\()/g;
+                    const regexTrackAlt = /(?<=-).*(?=\[)/g;
+                    const regexTrackAlt2 = /(?<=-).*(?=$)/g;
+                    const regexMix = /(?<=\().*(?=\))/g;
+                    const regexSpecial = /(?<=\[).*(?=\])/g;
+                    
                     let rxArtist = fullTitle.match(regexArtist);
                     let rxTrack = function() {
-                        let posDash = fullTitle.indexOf('-'), posParen = fullTitle.indexOf('('), posBrack = fullTitle.indexOf('[');
-                        if(posDash > -1 && posParen > -1) { return fullTitle.match(regexTrack); } 
-                        else if(posParen < 0 && posBrack > -1) { return fullTitle.match(regexTrackAlt); } 
-                        else if(posParen < 0 && posBrack < 0) { return fullTitle.match(regexTrackAlt2); } 
-                        else { return null; }
+                        let posParen = fullTitle.indexOf('(');
+                        let posBrack = fullTitle.indexOf('[');
+                        console.log(posParen, ', ', posBrack);
+                        if(posParen > -1) { //Contains paren first
+                            return fullTitle.match(regexTrack); //Match on paren, doesn't matter if there's a bracket
+                        } else 
+                        if(posParen < 0 && posBrack > -1) { //Doesn't have paren but has bracket
+                            return fullTitle.match(regexTrackAlt); //Match on bracket
+                        } else
+                        if(posParen < 0 && posBrack < 0) { //Doesn't have paren or bracket
+                            return fullTitle.match(regexTrackAlt2);
+                        } else {
+                            return '!';
+                        }
                     }
-                    let rxTrackName = rxTrack();
+                    //let rxTrack = fullTitle.match(regexTrack) != null ? fullTitle.match(regexTrack) : fullTitle.match(regexTrackAlt);
                     let rxMix = fullTitle.match(regexMix);
                     let rxSpecial = fullTitle.match(regexSpecial);
                     
-                    let tempData = {
-                        'releaseDate': releaseDate,
-                        'episodeNumber': episodeNumber,
+                    return {
                         'trackNumber': index + 1,
                         'artistName': Array.isArray(rxArtist) ? rxArtist[0].trim() : 'n/a',
-                        'trackName': Array.isArray(rxTrackName) ? rxTrackName[0].trim() : 'n/a',
+                        'trackName': rxTrack()[0].trim(),
                         'mixName': Array.isArray(rxMix) ? rxMix[0].trim() : 'n/a',
                         'specialName': Array.isArray(rxSpecial) ? rxSpecial[0].trim() : 'n/a',
                         'fullTitle': fullTitle
                     };
+                })});
 
-                    dataStore.push(tempData);
-                });
-                console.log('Saved Episode #' + episodeNumber);
+                trackList.forEach(el => { el['releaseDate'] = releaseDate; el['episodeNumber'] = episodeNumber;  });
+                
+                dataStore.push(trackList); console.log('Saved Episode #' + episodeNumber);
             });
             
             await page.waitForTimeout(pageWaitInterval); //Self-imposed rate limit

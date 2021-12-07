@@ -1,0 +1,14 @@
+{
+  "name": "google-places",
+  "version": "0.0.1",
+  "description": "A Google Places API test app.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "extrasyrup",
+  "license": "ISC",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.3.4"
+  }
+}
