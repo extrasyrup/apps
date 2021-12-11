@@ -2,11 +2,11 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const screenSizes = { large: { w: 1920, h: 4000 }, medium: { w: 1920, h: 2500 }, small: { w: 1920, h: 1080 } };
 const regexArtist = /(^).*(?=-)/g, regexTrack = /(?<=-).*(?=\()/g, regexTrackAlt = /(?<=-).*(?=\[)/g, regexTrackAlt2 = /(?<=-).*(?=$)/g, regexMix = /(?<=\().*(?=\))/g, regexSpecial = /(?<=\[).*(?=\])/g;
-const rootUrl = 'https://www.miroppb.com/ASOT/';
+const rootUrl = 'https://www.indianasbc.com/member-directory/page/2/?wpbdp_view=all_listings';
 
 exports.index = (req, res) => { timeStamp();
     scrapePage();
-    res.render('index', { title: 'CUSTOM SCRAPER' });
+    res.render('index', { title: 'SBC SCRAPER' });
 }
 
     const scrapePage = async () => {
@@ -15,63 +15,38 @@ exports.index = (req, res) => { timeStamp();
 
         let dataStore = [];
 
-        const episodeCount = 901;
-        const episodeMax = 1045; //1045
+        const episodeCount = 1;
+        const episodeMax = 1; //75
         const pageWaitInterval = 2000;
         
         console.log('Starting scrape...');
         for(let episodeNumber = episodeCount; episodeNumber <= episodeMax; episodeNumber++) {
-            await page.goto(rootUrl + episodeNumber, { waitUntil: 'networkidle2' });
-            await page.$eval('#info_table td:first-child', el => {
-                let textFind = 'Release Date:';
-                let pos1 = parseInt(el.textContent.indexOf(textFind)) + textFind.length;
-                let pos2 = parseInt(el.textContent.indexOf('\n', pos1));
-                return el.textContent.substr(pos1, pos2 - pos1).trim() || 'n/a';
-            })
-            .then(async (releaseDate) => {
-                let trackList = await page.$$eval('#tracklist ol li', (els) => { 
-                    return els.map((el, index) => {
-                        return el.textContent.replace(' – ', ' - ').trim();
+            await page.goto(rootUrl/*  + episodeNumber */, { waitUntil: 'networkidle2' });
+            let posts = await page.evaluate(() => {
+                let results = [];
+                let items = document.querySelectorAll('.wpbdp-listing');
+                items.forEach((item) => {
+                    let title = function() {
+                        return item.querySelector('.listing-title');
+                    }
+                    let website = item.querySelector('.wpbdp-field-website a');
+                    results.push({
+                        'title': title,
+                        'website': typeof website,
+                        //phone: item.querySelector('.wpbdp-field-phone .value').innerText
                     });
                 });
-
-                trackList.forEach((el, index) => {
-                    let fullTitle = el;
-                    let rxArtist = fullTitle.match(regexArtist);
-                    let rxTrack = function() {
-                        let posDash = fullTitle.indexOf('-'), posParen = fullTitle.indexOf('('), posBrack = fullTitle.indexOf('[');
-                        if(posDash > -1 && posParen > -1) { return fullTitle.match(regexTrack); } 
-                        else if(posParen < 0 && posBrack > -1) { return fullTitle.match(regexTrackAlt); } 
-                        else if(posParen < 0 && posBrack < 0) { return fullTitle.match(regexTrackAlt2); } 
-                        else { return null; }
-                    }
-                    let rxTrackName = rxTrack();
-                    let rxMix = fullTitle.match(regexMix);
-                    let rxSpecial = fullTitle.match(regexSpecial);
-                    
-                    let tempData = {
-                        'releaseDate': releaseDate,
-                        'episodeNumber': episodeNumber,
-                        'trackNumber': index + 1,
-                        'artistName': Array.isArray(rxArtist) ? rxArtist[0].trim() : 'n/a',
-                        'trackName': Array.isArray(rxTrackName) ? rxTrackName[0].trim() : 'n/a',
-                        'mixName': Array.isArray(rxMix) ? rxMix[0].trim() : 'n/a',
-                        'specialName': Array.isArray(rxSpecial) ? rxSpecial[0].trim() : 'n/a',
-                        'fullTitle': fullTitle
-                    };
-
-                    dataStore.push(tempData);
-                });
-                console.log('Saved Episode #' + episodeNumber);
+                return results;
             });
             
-            await page.waitForTimeout(pageWaitInterval); //Self-imposed rate limit
+            dataStore.push(posts);
+            //await page.waitForTimeout(pageWaitInterval); //Self-imposed rate limit
         }
 
         console.log('Browser Closed.');
         await browser.close();
 
-        var jsonContent = JSON.stringify(dataStore);
+        let jsonContent = JSON.stringify(dataStore);
         function writeFile(fileName, content) {
             fs.writeFile(fileName, content, 'utf8', function (err) {
                 if (err) {
@@ -82,73 +57,9 @@ exports.index = (req, res) => { timeStamp();
                 console.log("JSON file has been saved.");
             });
         }
-        writeFile(`data/asot/output_${episodeCount}-${episodeMax}.json`, jsonContent); timeStamp();
+        writeFile(`data/sbc/output.json`, jsonContent); timeStamp();
 
         return dataStore;
-    }
-
-
-exports.fb = (req, res) => {
-    getPageListings();
-    res.render('index', { title: 'FB SCRAPER' });
-}
-
-    const getPageListings = async () => {
-        const browser = await puppeteer.launch(/*{ devtools: true, headless: false }*/);
-        const page = await browser.newPage();
-        await page.setViewport({ width: screenSizes.small.w, height: screenSizes.small.h });
-        let dataPull = [];
-
-        page.on('response', async function(response) {
-            let responseUrl = response.url(); //console.log('Response URL...', responseUrl);
-
-            if(responseUrl.includes('https://api.bettingpros.com/v3/pbcs?sport=NBA&')) {
-                //let resJson = await response.text().then((value) => console.log(value));
-                let resStatus = response.initiator; console.log('resStatus: ' + resStatus);
-            }
-        });
-
-        await page.goto('https://www.bettingpros.com/nba/picks/prop-bets/?date=2021-11-18', { waitUntil: 'networkidle2' }); //Load webpage
-        //console.log('dataPull... ', dataPull);
-        browser.close();
-
-        return dataPull;
-    }
-
-
-exports.nodemail = (req, res) => {
-    main().catch(console.error);
-    res.render('index', { title: 'NODEMAIL' });
-}
-
-    const nodemailer = require("nodemailer");
-    async function main() {
-        // create reusable transporter object using the default SMTP transport
-        let transporter = nodemailer.createTransport({
-            host: "smtp.dreamhost.com",
-            port: 465,
-            secure: true, // true for 465, false for other ports
-            auth: {
-                user: 'relay@extrasyrup.xyz',
-                pass: '@@Ital1an!!'
-            }
-        });
-
-        // send mail with defined transport object
-        let info = await transporter.sendMail({
-            from: '"Message Relay" <relay@extrasyrup.xyz>', // sender address
-            to: "udoobu@gmail.com", // list of receivers
-            subject: "Hello", // Subject line
-            text: "Hello world?", // plain text body
-            html: "<b>Hello world?</b>" // html body
-        });
-
-        console.log("Message sent: %s", info.messageId);
-        // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-
-        // Preview only available when sending through an Ethereal account
-        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-        // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
     }
 
 function timeStamp() {

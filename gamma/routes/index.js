@@ -10,7 +10,7 @@ router.get('/', function(req, res, next) {
 
 var custom_controller = require('../controllers/custom');
 router.get('/custom', custom_controller.index);
-router.get('/fb', custom_controller.fb);
-router.get('/nodemail', custom_controller.nodemail);
+//router.get('/fb', custom_controller.fb);
+//router.get('/nodemail', custom_controller.nodemail);
 
 module.exports = router;
