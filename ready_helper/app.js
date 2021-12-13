@@ -7,13 +7,13 @@ const fs = require('fs');
 const reddit = new Reddit({ username: 'i_am_extra_syrup', password: '@@Gr33nw00d!!', appId: 'xq1xMQqRkocVuYkQikZQxA', appSecret: '0XTCFV2DAml-EERvsLobyGlc6oKJkQ', userAgent: 'ready_helper/0.0.1 (https://extrasyrup.xyz/ready_helper/about.html)' });
 let apiAfter = '', apiCount = 0, finalResult = [];
 
-const apiLimit = 100, apiMax = 10;
-const endpoints = ['Options', 'wallpaper', 'art', 'painting', 'mentalhealth', 'all', 'askreddit', 'HistoryPorn', 'DataHoarder'];
+const apiLimit = 100, apiMax = 6;
+const endpoints = ['coolguides', 'wallpaper', 'art', 'painting', 'mentalhealth', 'all', 'askreddit', 'HistoryPorn', 'DataHoarder'];
 const endpoints_nft = ['NFT', 'NFTsMarketplace', 'NFTExchange', 'OpenSea', 'NFTmarket'];
 const currentEndpoint = endpoints[0];
 const rootImgDir = 'data/images/';
 const savePath = rootImgDir + currentEndpoint;
-const scrapeOptions = { 'images': false };
+const scrapeOptions = { 'images': true };
 
 (function runApi(c) {
     console.log('Page: ' + c);
@@ -51,7 +51,7 @@ const scrapeOptions = { 'images': false };
 })(0);
 
 async function getRedditData(sub, apiAfter, apiCount) {
-    return await reddit.get(`/r/${sub}/new`, { 'limit': apiLimit, 'after': apiAfter, 'count': apiCount, 't': 'year' })
+    return await reddit.get(`/r/${sub}/top`, { 'limit': apiLimit, 'after': apiAfter, 'count': apiCount, 't': 'all' })
     .then(me => {
         return {
             'after': me.data.after,
