@@ -7,18 +7,18 @@ const fs = require('fs');
 const reddit = new Reddit({ username: 'i_am_extra_syrup', password: '@@Gr33nw00d!!', appId: 'xq1xMQqRkocVuYkQikZQxA', appSecret: '0XTCFV2DAml-EERvsLobyGlc6oKJkQ', userAgent: 'ready_helper/0.0.1 (https://extrasyrup.xyz/ready_helper/about.html)' });
 let apiAfter = '', apiCount = 0, finalResult = [];
 
-const apiLimit = 100, apiMax = 6;
+const apiLimit = 100, apiMax = 20;
 const endpoints = ['coolguides', 'wallpaper', 'art', 'painting', 'mentalhealth', 'all', 'askreddit', 'HistoryPorn', 'DataHoarder'];
 const endpoints_nft = ['NFT', 'NFTsMarketplace', 'NFTExchange', 'OpenSea', 'NFTmarket'];
 const currentEndpoint = endpoints[0];
 const rootImgDir = 'data/images/';
 const savePath = rootImgDir + currentEndpoint;
-const scrapeOptions = { 'images': true };
+const scrapeOptions = { 'images': false };
 
 (function runApi(c) {
     console.log('Page: ' + c);
 
-    if(c >= apiMax) {
+    if(c >= apiMax || apiAfter == null) {
         writeFile(`data/${currentEndpoint}-${getRnd(999999)}.json`, JSON.stringify(finalResult)); //Save all results to json file
         timeStamp('End');
         return
@@ -51,7 +51,7 @@ const scrapeOptions = { 'images': true };
 })(0);
 
 async function getRedditData(sub, apiAfter, apiCount) {
-    return await reddit.get(`/r/${sub}/top`, { 'limit': apiLimit, 'after': apiAfter, 'count': apiCount, 't': 'all' })
+    return await reddit.get(`/r/${sub}/hot`, { 'limit': apiLimit, 'after': apiAfter, 'count': apiCount/* , 't': 'all' */ })
     .then(me => {
         return {
             'after': me.data.after,
@@ -86,7 +86,7 @@ function writeFile(fileName, content) {
             console.log("An error occured while writing JSON Object to File.");
             return console.log(err);
         }
-        console.log("JSON file has been saved.");
+        console.log(`JSON file has been saved: ${fileName}`);
     });
 }
 
